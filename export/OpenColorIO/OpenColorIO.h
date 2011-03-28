@@ -272,6 +272,11 @@ OCIO_NAMESPACE_ENTER
         // * If the default role is not defined, return an empty string.
         const char * parseColorSpaceFromString(const char * str) const;
         
+        //!cpp:function:: Given ImageInfo, return the appropriate colorspace. 
+        // The details of this process are config specific.
+        // If an appropriate colorspace is not found, a null ColorSpaceRcPtr will be returned.
+        ConstColorSpaceRcPtr getColorSpace(ConstImageInfoRcPtr & media) const;
+        
         //!cpp:function::
         bool isStrictParsingEnabled() const;
         //!cpp:function::
@@ -1003,6 +1008,48 @@ OCIO_NAMESPACE_ENTER
         Context& operator= (const Context &);
         
         static void deleter(Context* c);
+        
+        class Impl;
+        friend class Impl;
+        Impl * m_impl;
+        Impl * getImpl() { return m_impl; }
+        const Impl * getImpl() const { return m_impl; }
+    };
+    
+    
+    
+    //!cpp:class::
+    class OCIOEXPORT ImageInfo
+    {
+    public:
+        //!cpp:function::
+        static ImageInfoRcPtr Create();
+        
+        //!cpp:function::
+        ImageInfoRcPtr createEditableCopy() const;
+        
+        //!cpp:function::
+        const char * getFilename() const;
+        void setFilename(const char * filename);
+        
+        //!cpp:function:: This is typically the extension of
+        // the file format, but on occation may not be.
+        const char * getFormat() const;
+        void setFormat(const char * format);
+        
+        //!cpp:function::
+        BitDepth getBitDepth() const;
+        //!cpp:function::
+        void setBitDepth(BitDepth bitDepth);
+        
+    private:
+        ImageInfo();
+        ~ImageInfo();
+        
+        ImageInfo(const ImageInfo &);
+        ImageInfo& operator= (const ImageInfo &);
+        
+        static void deleter(ImageInfo* c);
         
         class Impl;
         friend class Impl;

@@ -105,6 +105,13 @@ OCIO_NAMESPACE_ENTER
     //!cpp:type::
     typedef OCIO_SHARED_PTR<Baker> BakerRcPtr;
     
+    class OCIOEXPORT ImageInfo;
+    //!cpp:type::
+    typedef OCIO_SHARED_PTR<const ImageInfo> ConstImageInfoRcPtr;
+    //!cpp:type::
+    typedef OCIO_SHARED_PTR<ImageInfo> ImageInfoRcPtr;
+    
+    
     class OCIOEXPORT ImageDesc;
     class OCIOEXPORT GpuShaderDesc;
     class OCIOEXPORT Exception;
