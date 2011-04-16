@@ -200,6 +200,23 @@ else()
 endif()
 
 ###############################################################################
+### CTL ###
+
+OCIOFindCTL()
+# find_package(CTL)
+if(CTL_FOUND)
+    messageonce("Will build the CTL transform support")
+    add_definitions(-DOCIO_CTL_SUPPORT)
+    set(EXTERNAL_INCLUDE_DIRS ${EXTERNAL_INCLUDE_DIRS} ${CTL_INCLUDES})
+    #set(EXTERNAL_COMPILE_FLAGS "${EXTERNAL_COMPILE_FLAGS} ${Truelight_COMPILE_FLAGS}")
+    #set(EXTERNAL_LINK_FLAGS "${EXTERNAL_LINK_FLAGS} ${Truelight_LINK_FLAGS}")
+    set(EXTERNAL_LIBRARIES ${EXTERNAL_LIBRARIES} ${CTL_LIBRARIES})
+else()
+    messageonce("Not building ctl transform support.")
+endif()
+
+
+###############################################################################
 ### CORE ###
 
 add_subdirectory(src/core)

@@ -4,6 +4,36 @@ MACRO(messageonce MSG)
     endif()
 ENDMACRO()
 
+MACRO(OCIOFindCTL)
+    FIND_PATH(CTL_INCLUDES CtlVersion.h
+        /usr/include
+        /usr/local/include
+        /sw/include
+        /opt/local/include
+        /net/homedirs/jeremys/ctl/include/CTL
+        DOC "The directory where CtlVersion.h resides")
+    FIND_LIBRARY(CTL_LIBRARIES
+        NAMES IlmCtl IlmCtlMath IlmCtlSimd IlmThread IMath Iex Half
+        PATHS
+        /usr/lib64
+        /usr/lib
+        /usr/local/lib64
+        /usr/local/lib
+        /sw/lib
+        /opt/local/lib
+        /net/homedirs/jeremys/ctl/lib/
+        DOC "The CTL library")
+    
+    if(CTL_INCLUDES AND CTL_LIBRARIES)
+        set(CTL_FOUND TRUE)
+        message(STATUS "Found CTL libraries ${CTL_LIBRARIES}")
+        message(STATUS "Found CTL includes ${CTL_INCLUDES}")
+    else()
+        message(STATUS "CTL not found")
+        set(CTL_FOUND FALSE)
+    endif()
+ENDMACRO()
+
 MACRO(OCIOFindOpenGL)
     if(APPLE)
         INCLUDE_DIRECTORIES(/System/Library/Frameworks)
