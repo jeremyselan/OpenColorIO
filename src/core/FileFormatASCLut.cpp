@@ -38,6 +38,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ParseUtils.h"
 #include "pystring/pystring.h"
 
+#include <tinyxml.h>
+
 OCIO_NAMESPACE_ENTER
 {
     namespace
@@ -98,10 +100,84 @@ OCIO_NAMESPACE_ENTER
         CachedFileRcPtr
         LocalFileFormat::Load(std::istream & istream) const
         {
-            // this shouldn't happen
-            if(!istream)
+            std::ostringstream rawdata;
+            rawdata << istream.rdbuf();
+            
+            LocalCachedFileRcPtr cachedFile = LocalCachedFileRcPtr(new LocalCachedFile());
+            
+            TiXmlDocumentRcPtr doc = TiXmlDocumentRcPtr(new TiXmlDocument());
+            doc->Parse(rawdata.str().c_str());
+            
+            if(doc->Error())
             {
-                throw Exception ("File stream empty when trying to read asc lut");
+                std::ostringstream os;
+                os << "XML Parse Error in ACC lut ";
+                os << doc->ErrorDesc() << " (line ";
+                os << doc->ErrorRow() << ", character ";
+                os << doc->ErrorCol() << ")";
+                throw Exception(os.str().c_str());
+            }
+            
+            TiXmlElement* rootElement = doc->RootElement();
+            if(!rootElement)
+            {
+                std::ostringstream os;
+                os << "Error loading asc lut xml. Null root element.";
+                throw Exception(os.str().c_str());
+            }
+            
+            if(std::string(rootElement->Value()) != "ProcessList")
+            {
+                std::ostringstream os;
+                os << "Error loading asc xml. ";
+                os << "Root element is type '" << rootElement->Value() << "', ";
+                os << "ProcessList expected.";
+                throw Exception(os.str().c_str());
+            }
+            
+            TiXmlNode * child = rootElement->FirstChild();
+            while(child)
+            {
+                /*
+                TiXmlPrinter printer;
+                printer.SetStreamPrinting();
+                child->Accept( &printer );
+                std::string xml = printer.Str();
+                
+                CDLTransformRcPtr transform = CDLTransform::Create();
+                LoadCDL(transform.get(), child->ToElement());
+                
+                std::string id = pystring::lower(transform->getID());
+                if(id.empty())
+                {
+                    std::ostringstream os;
+                    os << "Error loading ccc xml, ";
+                    os << "All ASC ColorCorrections must specify an 'id' value.";
+                    throw Exception(os.str().c_str());
+                }
+                
+                CDLMap::iterator iter = cachedFile->transforms.find(id);
+                if(iter != cachedFile->transforms.end())
+                {
+                    std::ostringstream os;
+                    os << "Error loading ccc xml. ";
+                    os << "All ASC ColorCorrections must specify a unique 'id' value. ";
+                    os << "Duplicate elements with '" << id << "' found.";
+                    throw Exception(os.str().c_str());
+                }
+                
+                cachedFile->transforms[id] = transform;
+                */
+                
+                child = child->NextSibling();
+            }
+            
+            if(cachedFile->transforms.empty())
+            {
+                std::ostringstream os;
+                os << "Error loading ccc xml. ";
+                os << "No ColorCorrection elements found.";
+                throw Exception(os.str().c_str());
             }
             
             // Parse the file
@@ -113,6 +189,7 @@ OCIO_NAMESPACE_ENTER
             
             return cachedFile;
         }
+        
         
         void
         LocalFileFormat::BuildFileOps(OpRcPtrVec & ops,
