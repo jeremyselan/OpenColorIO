@@ -1,0 +1,55 @@
+---
+ocio_profile_version: 1
+
+search_path: luts
+strictparsing: false
+luma: [0.2126, 0.7152, 0.0722]
+
+roles:
+  default: data
+
+displays:
+  sRGB:
+    - !<View> {name: Raw, colorspace: data}
+active_displays: [sRGB]
+active_views: [Raw]
+
+colorspaces:
+  - !<ColorSpace>
+    name: scene_grey18
+    family: lin
+    bitdepth: 32f
+    isdata: false
+    allocation: lg2
+    allocationvars: [-15, 6]
+
+  - !<ColorSpace>
+    name: log
+    family: log
+    bitdepth: 32f
+    isdata: false
+    allocation: uniform
+    allocationvars: [0, 1]
+    from_reference: !<GroupTransform>
+      children:
+        - !<FileTransform> {src: jp_lin2log.lut, interpolation: linear}
+
+  - !<ColorSpace>
+    name: Dreamcolor
+    family: Dreamcolor
+    bitdepth: 32f
+    isdata: false
+    allocation: uniform
+    allocationvars: [0, 1]
+    from_reference: !<GroupTransform>
+      children:
+        - !<CDLTransform> {slope: [0.803696, 0.956682, 0.947516], offset: [0, 0, 0], power: [1, 1, 1], saturation: 1}
+        - !<FileTransform> {src: jp_lin2log.lut, interpolation: linear}
+        - !<FileTransform> {src: LC3DL_Kodak2383_Sony_GDM.3dl, interpolation: linear}
+
+  - !<ColorSpace>
+    name: data
+    family: data
+    bitdepth: 10ui
+    isdata: true
+    allocation: uniform
