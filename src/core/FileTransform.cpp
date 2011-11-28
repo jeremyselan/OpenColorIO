@@ -202,6 +202,7 @@ OCIO_NAMESPACE_ENTER
     FormatRegistry::FormatRegistry()
     {
         registerFileFormat(CreateFileFormat3DL());
+        registerFileFormat(CreateFileFormatAutodesk1D());
         registerFileFormat(CreateFileFormatCCC());
         registerFileFormat(CreateFileFormatCC());
         registerFileFormat(CreateFileFormatCSP());
