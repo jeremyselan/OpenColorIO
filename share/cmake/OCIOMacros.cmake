@@ -84,7 +84,34 @@ MACRO(OCIOFindOpenImageIO)
         /sw/lib
         /opt/local/lib
         DOC "The OIIO library")
-
+    if(OCIO_BUILD_STATIC)
+        set( OIIO_STATIC_LIBS
+            boost_filesystem
+            boost_regex
+            boost_system
+            boost_thread
+            half
+            Iex
+            Imath
+            IlmImf
+            IlmThread
+            jasper
+            jpeg
+            png
+            tiff
+            z
+        )
+        foreach( OIIO_STATIC_LIB ${OIIO_STATIC_LIBS} )
+            FIND_LIBRARY(${OIIO_STATIC_LIB}_LIBRARIES
+                NAMES ${OIIO_STATIC_LIB}
+                PATHS
+                ${OIIO_LIBRARY_PATH}
+                ${OIIO_PATH}/lib/
+                DOC "The Iex library")
+            set(OIIO_LIBRARIES ${OIIO_LIBRARIES} ${${OIIO_STATIC_LIB}_LIBRARIES})
+        endforeach()
+    endif()
+    
     if(OIIO_INCLUDES AND OIIO_LIBRARIES)
         set(OIIO_FOUND TRUE)
         message(STATUS "Found OIIO library ${OIIO_LIBRARIES}")
