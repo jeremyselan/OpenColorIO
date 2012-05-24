@@ -700,6 +700,20 @@ OCIO_NAMESPACE_ENTER
         static void View(float * m44, float * offset4,
                          int * channelHot4,
                          const float * lumaCoef3);
+        
+        //!cpp:function::
+        // Chromaticities are xyRed, xyGreen, xyBlue, xyWhite
+        // Y is luminance
+        static void RGBtoXYZ(float * m44, float * offset4,
+                             const float * chromaticities8,
+                             float Y);
+        
+        //!cpp:function::
+        // Chromaticities are xyRed, xyGreen, xyBlue, xyWhite
+        // Y is luminance
+        static void XYZtoRGB(float * m44, float * offset4,
+                             const float * chromaticities8,
+                             float Y);
     
     private:
         MatrixTransform();

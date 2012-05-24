@@ -265,6 +265,7 @@ OCIO_NAMESPACE_ENTER
     namespace
     {
     
+    // Allows in-place operation
     void GetM44V4Product(float* vout, const float* m, const float* v_)
     {
         float v[4];
@@ -338,6 +339,78 @@ OCIO_NAMESPACE_ENTER
         return true;
     }
     
+    // Chromaticities are xyRed, xyGreen, xyBlue, xyWhite
+    // Y is luminance
+    bool GetM44RGBtoXYZ(float * m44,
+                        const float * chromaticities8,
+                        float Y_)
+    {
+        if(!chromaticities8) return false;
+        if(!m44) return false;
+        
+        double red_x = static_cast<double>(chromaticities8[0]);
+        double red_y = static_cast<double>(chromaticities8[1]);
+        double green_x = static_cast<double>(chromaticities8[2]);
+        double green_y = static_cast<double>(chromaticities8[3]);
+        double blue_x = static_cast<double>(chromaticities8[4]);
+        double blue_y = static_cast<double>(chromaticities8[5]);
+        double white_x = static_cast<double>(chromaticities8[6]);
+        double white_y = static_cast<double>(chromaticities8[7]);
+        
+        if(IsScalarEqualToZero(static_cast<float>(white_y)))
+        {
+            return false;
+        }
+        
+        // X and Z values of RGB value (1, 1, 1), or "white"
+        double Y = static_cast<double>(Y_);
+        double X = white_x * Y / white_y;
+        double Z = (1.0 - white_x - white_y) * Y / white_y;
+        
+        // Scale factors for matrix rows
+        double d = (red_x * (blue_y - green_y) +
+                    blue_x * (green_y - red_y) +
+                    green_x * (red_y - blue_y));
+        if(IsScalarEqualToZero(static_cast<float>(d)))
+        {
+            return false;
+        }
+        
+        double Sr = (X * (blue_y - green_y) -
+                     green_x * (Y * (blue_y - 1.0) + blue_y  * (X + Z)) +
+                     blue_x * (Y * (green_y - 1.0) + green_y * (X + Z))) / d;
+        
+        double Sg = (X * (red_y - blue_y) +
+                     red_x * (Y * (blue_y - 1.0) + blue_y * (X + Z)) -
+                     blue_x * (Y * (red_y - 1.0) + red_y * (X + Z))) / d;
+        
+        double Sb = (X * (green_y - red_y) -
+                     red_x * (Y * (green_y - 1.0) + green_y * (X + Z)) +
+                     green_x * (Y * (red_y - 1.0) + red_y * (X + Z))) / d;
+        
+        // Assembling the matrix
+        m44[0] = static_cast<float>(Sr * red_x);
+        m44[1] = static_cast<float>(Sg * green_x);
+        m44[2] = static_cast<float>(Sb * blue_x);
+        m44[3] = 0.0f;
+        
+        m44[4] = static_cast<float>(Sr * red_y);
+        m44[5] = static_cast<float>(Sg * green_y);
+        m44[6] = static_cast<float>(Sb * blue_y);
+        m44[7] = 0.0f;
+        
+        m44[8] = static_cast<float>(Sr * (1.0 - red_x - red_y));
+        m44[9] = static_cast<float>(Sg * (1.0 - green_x - green_y));
+        m44[10] = static_cast<float>(Sb * (1.0 - blue_x - blue_y));
+        m44[11] = 0.0f;
+        
+        m44[12] = 0.0f;
+        m44[13] = 0.0f;
+        m44[14] = 0.0f;
+        m44[15] = 1.0f;
+        
+        return true;
+    }
 }
 
 OCIO_NAMESPACE_EXIT
@@ -598,6 +671,61 @@ OIIO_ADD_TEST(MathUtils, mxb_invert)
         OIIO_CHECK_EQUAL(invertsuccess, false);
     }
 }
+
+namespace
+{
+    // Works in place
+    void XYZtoxyY(float* xyY, const float* XYZ)
+    {
+        float total = (XYZ[0] + XYZ[1] + XYZ[2]);
+        float Y = XYZ[1];
+        
+        xyY[0] = XYZ[0] / total;
+        xyY[1] = XYZ[1] / total;
+        xyY[2] = Y;
+    }
+}
+
+
+OIIO_ADD_TEST(MatrixTransform, GetM44RGBtoXYZ)
+{
+    float error = 1e-6f;
+    
+    {
+        float primaries709[] = { 0.64f, 0.33f,
+                                 0.30f, 0.60f,
+                                 0.15f, 0.06f,
+                                 0.3127f, 0.3290f };
+        float m44[16];
+        GetM44RGBtoXYZ(m44, primaries709, 1.0f);
+        
+        float rTest[] = { 1.0f, 0.0f, 0.0f, 0.0f };
+        GetM44V4Product(rTest, m44, rTest);
+        XYZtoxyY(rTest, rTest);
+        OIIO_CHECK_CLOSE(rTest[0], primaries709[0], error);
+        OIIO_CHECK_CLOSE(rTest[1], primaries709[1], error);
+        
+        float gTest[] = { 0.0f, 1.0f, 0.0f, 0.0f };
+        GetM44V4Product(gTest, m44, gTest);
+        XYZtoxyY(gTest, gTest);
+        OIIO_CHECK_CLOSE(gTest[0], primaries709[2], error);
+        OIIO_CHECK_CLOSE(gTest[1], primaries709[3], error);
+        
+        float bTest[] = { 0.0f, 0.0f, 1.0f, 0.0f };
+        GetM44V4Product(bTest, m44, bTest);
+        XYZtoxyY(bTest, bTest);
+        OIIO_CHECK_CLOSE(bTest[0], primaries709[4], error);
+        OIIO_CHECK_CLOSE(bTest[1], primaries709[5], error);
+        
+        float wTest[] = { 1.0f, 1.0f, 1.0f, 0.0f };
+        GetM44V4Product(wTest, m44, wTest);
+        XYZtoxyY(wTest, wTest);
+        OIIO_CHECK_CLOSE(wTest[0], primaries709[6], error);
+        OIIO_CHECK_CLOSE(wTest[1], primaries709[7], error);
+    }
+}
+
+
 
 #endif
 

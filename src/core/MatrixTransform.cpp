@@ -354,6 +354,62 @@ OCIO_NAMESPACE_ENTER
         }
     }
     
+    void MatrixTransform::RGBtoXYZ(float * m44, float * offset4,
+                                   const float * chromaticities8,
+                                   float Y)
+    {
+        if(offset4)
+        {
+            offset4[0] = 0.0f;
+            offset4[1] = 0.0f;
+            offset4[2] = 0.0f;
+            offset4[3] = 0.0f;
+        }
+        
+        if(m44)
+        {
+            if(!GetM44RGBtoXYZ(m44, chromaticities8, Y))
+            {
+                std::ostringstream os;
+                os << "Error computing MatrixTransform, ";
+                os << "degenerate primaries.";
+                throw Exception(os.str().c_str());
+            }
+        }
+    }
+    
+    void MatrixTransform::XYZtoRGB(float * m44, float * offset4,
+                                   const float * chromaticities8,
+                                   float Y)
+    {
+        if(offset4)
+        {
+            offset4[0] = 0.0f;
+            offset4[1] = 0.0f;
+            offset4[2] = 0.0f;
+            offset4[3] = 0.0f;
+        }
+        
+        if(m44)
+        {
+            if(!GetM44RGBtoXYZ(m44, chromaticities8, Y))
+            {
+                std::ostringstream os;
+                os << "Error computing MatrixTransform, ";
+                os << "degenerate primaries.";
+                throw Exception(os.str().c_str());
+            }
+            
+            if(!GetM44Inverse(m44, m44))
+            {
+                std::ostringstream os;
+                os << "Error computing MatrixTransform. ";
+                os << "Failure computing inverse.";
+                throw Exception(os.str().c_str());
+            }
+        }
+    }
+        
     std::ostream& operator<< (std::ostream& os, const MatrixTransform& t)
     {
         os << "<MatrixTransform ";

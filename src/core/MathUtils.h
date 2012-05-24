@@ -179,6 +179,15 @@ OCIO_NAMESPACE_ENTER
     // Supports in-place operations
     bool GetMxbInverse(float* mout, float* vout,
                        const float* m, const float* v);
+                       
+                       
+    ////////////////////////////////////////////////////////////////////////////
+    
+    // Chromaticities are xyRed, xyGreen, xyBlue, xyWhite
+    // Y is luminance
+    bool GetM44RGBtoXYZ(float * m44,
+                        const float * chromaticities8,
+                        float Y);
 
 }
 OCIO_NAMESPACE_EXIT
