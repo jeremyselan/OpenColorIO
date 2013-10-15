@@ -139,6 +139,7 @@ OCIO_NAMESPACE_ENTER
     FileFormat * CreateFileFormatCCC();
     FileFormat * CreateFileFormatCC();
     FileFormat * CreateFileFormatCSP();
+    FileFormat * CreateFileFormatFlanders();
     FileFormat * CreateFileFormatHDL();
     FileFormat * CreateFileFormatIridasItx();
     FileFormat * CreateFileFormatIridasCube();
